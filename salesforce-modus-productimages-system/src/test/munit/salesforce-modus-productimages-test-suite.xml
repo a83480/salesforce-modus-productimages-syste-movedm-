@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+	xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<munit:config name="salesforce-modus-productimages-test-suite.xml" />
+	<http:request-config name="MUnitHTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="a1285d00-226d-441a-bee7-83cba52523ad" />
+	<munit:test name="salesforce-modus-productimages-test-suite-sales-product-images-system-implSub_FlowTest" description="Test" doc:id="1e2d2af6-ea3d-4396-87cb-c4ecdc4f95c5" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="getProductImages HTTP Request" doc:id="190aec2f-f523-479c-b4f0-f6ad006306a5" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="#[Get Product Images]" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('sample_data/get_invoices_response.json')]" mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution>
+			<http:request method="GET" doc:name="getProductImages Request" doc:id="ad4eff30-b5d5-4898-9c25-4f2686ae7ade" config-ref="MUnitHTTP_Request_configuration" path="/api/coupa/invoice/v2.0/invoices" >
+			</http:request>
+		</munit:execution>
+	</munit:test>
+
+
+</mule>

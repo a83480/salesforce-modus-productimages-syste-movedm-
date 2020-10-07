@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:aw-json-logger="http://www.mulesoft.org/schema/mule/aw-json-logger" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/aw-json-logger http://www.mulesoft.org/schema/mule/aw-json-logger/current/mule-aw-json-logger.xsd">
+    <flow name="sales-product-images-system-main">
+        <http:listener config-ref="sales-product-images-system-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <ee:transform doc:name="CorrelationId-Transform Message" doc:id="e69d05d6-2b3d-4765-ab8d-c096aa48582a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[attributes.headers.correlationId default '']]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<apikit:router config-ref="sales-product-images-system-config" />
+		<error-handler ref="apiKitGlobalErrorHandler" />
+    </flow>
+    <flow name="sales-product-images-system-console">
+        <http:listener config-ref="sales-product-images-system-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="sales-product-images-system-config" />
+    </flow>
+    <flow name="get:\productImages:sales-product-images-system-config">
+		<logger level="INFO" doc:name="Logger" doc:id="4a1fdc72-1c6c-4dd9-96bf-bc4894dffe15" message="Log"/>
+		<aw-json-logger:logger doc:name="Initial Logger" doc:id="e4c49ca1-8dbe-4ae7-92ad-7b1d90c4ea83" rootCorrelationId='#[vars.rootCorrelationId default ""]' applicationName="${processName}" logMessage="'Inside getProductImages flow start '" category="${processName}"/>
+		<logger level="INFO" doc:name="Logger" doc:id="6313e187-8b23-4ea9-9ada-22a5ccd3aab6" message="#[payload]"/>
+		<flow-ref doc:name="sales-product-images-system-implSub_Flow Reference" doc:id="d41bddf9-5601-4669-9d05-c1197d86f5ff" name="sales-product-images-system-implSub_Flow"/>
+		<ee:transform doc:name="FinalProduct-Transform Message" doc:id="4e6f5eb5-3387-46e4-95e5-7cc6be83434a">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.children filter ($.names.value contains ('Product Knowledge') )
+map ((main, indexOfmain) -> {
+	(main.children filter ($.names.value contains ('Interactive Product Demonstrations'))
+		map (( child , indexOfChild ) -> 
+			 series: (child.children map ( (subSer, indexOfSubSer) ->
+			 	{
+			 		seriesName: subSer.names.value[0],
+			 		subSeries: subSer.children map ((subChild, indexOfSubChild) ->
+			 			{
+			 				subSeries: subChild.names.value[0],
+			 				subSeriesUrl: subChild.url
+			 			}
+			 		)
+			 	}
+			 )	
+			)
+		)
+	)
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<aw-json-logger:logger doc:name="Complete Logger" doc:id="759f3f7b-f5a3-4ed8-9358-d459b2d2d78d" category="${processName}" rootCorrelationId='#[vars.rootCorrelationId default ""]' applicationName="${processName}" logMessage="'Inside getProductImages flow complete '" tracePoint="END">
+			<aw-json-logger:content ><![CDATA[#[payload]]]></aw-json-logger:content>
+		</aw-json-logger:logger>
+    </flow>
+</mule>

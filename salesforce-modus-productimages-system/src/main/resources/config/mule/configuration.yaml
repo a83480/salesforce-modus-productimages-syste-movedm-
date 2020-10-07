@@ -1,0 +1,8 @@
+processName: "salesforce-modus-productimages-system"
+loggerCategory: "JSON-SalesforceComm"
+anypoint:
+  platform:
+    visualizer:
+      layer: "System"
+event.schedule: "1"
+watermark.lastUpdateDate: "2020-09-11T00:00:00.000Z"

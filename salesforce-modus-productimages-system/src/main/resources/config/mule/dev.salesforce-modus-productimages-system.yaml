@@ -1,0 +1,20 @@
+#Modus properties
+oAuth:
+  host: "auth.appdataroom.com"
+  path: "/oauth/token"
+  client_secret: "8hRFfQPqyGSgkwNw"
+  password: "Rkuldeep2*" 
+  grant_type: "password"
+  username: "rajani.cheruku@andersencorp.com"
+  client_id: "74qZ5KZz4kbsyRw8"
+  
+GET:
+  host: "api3.appdataroom.com"
+  path: "/folders"
+  params:
+    folderIdUri: "176307"
+    depthQuery: "4"
+
+error:
+  clientId: "6e02ff0541664a36a880799a596c7407"
+  clientSecret: "40c9624E6A62451aB3cB036b41B8DE24"

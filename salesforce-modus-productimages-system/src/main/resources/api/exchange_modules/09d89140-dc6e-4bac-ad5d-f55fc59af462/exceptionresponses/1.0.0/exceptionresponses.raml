@@ -1,0 +1,11 @@
+#%RAML 1.0 Trait
+usage: Generic Response for exception scenarios
+responses:
+  500:
+    body:
+      application/json:
+        example: {"message": "System Exception", "exception": "Exception Details"}
+  519:
+    body:
+      application/json:
+        example: {"message": "Unhandled Exception", "exception": "Exception Details"}

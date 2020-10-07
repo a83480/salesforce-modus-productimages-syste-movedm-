@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:aw-json-logger="http://www.mulesoft.org/schema/mule/aw-json-logger" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/aw-json-logger http://www.mulesoft.org/schema/mule/aw-json-logger/current/mule-aw-json-logger.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+		<import doc:name="Import" doc:id="b29a8a34-4c60-41fb-a5ad-8b9ca0a05de7" doc:description="error-handling.xml" file="error-handling.xml" />
+	<import doc:name="Import" doc:id="26669676-0116-411c-8dd7-ffdfb5cfb826" doc:description="error-implementation.xml" file="error-implementation.xml" />
+ 	<import doc:name="Import" doc:id="befedce6-5204-4328-81f0-ca999bbcbdc7" file="request-response-logger.xml" doc:description="request-response-logger.xml"/>
+     <http:listener-config name="sales-product-images-system-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    	<http:request-config name="HTTP_Request_configuration-getProductImages" doc:name="HTTP Request configuration" doc:id="76c607f2-e30c-4185-9eff-ccff3f888f59">
+		<http:request-connection host="${GET.host}" protocol="HTTPS" port="443"/>
+	</http:request-config>
+    <apikit:config name="sales-product-images-system-config" api="sales-product-images-system.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" >
+		<apikit:flow-mappings >
+			<apikit:flow-mapping resource="/productImages" action="get" content-type="application/json" flow-ref="get:\productImages:sales-product-images-system-config" />
+		</apikit:flow-mappings>
+	</apikit:config>
+	<http:request-config name="HTTP_Request_configuration_OAuth" doc:name="HTTP Request configuration" doc:id="54fcb05b-03e8-4d07-9618-78ff1aa6f31d">
+		<http:request-connection protocol="HTTPS" host="${oAuth.host}" port="443" >
+		</http:request-connection>
+	</http:request-config>
+	<api-gateway:autodiscovery apiId="1" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="0642b7fb-2b73-4d15-b310-256e91d0b661" flowRef="get:\productImages:sales-product-images-system-config" />
+ 	<configuration-properties doc:name="Configuration properties" doc:id="3db0d076-519d-4a6f-988a-3f475ec6990d" file="config/mule/${mule.env}.salesforce-modus-productimages-system.yaml" />
+ 	<configuration-properties doc:name="Configuration properties" doc:id="17e22ee8-74f0-486c-bd3e-c62b65731c46" file="config/mule/configuration.yaml" />
+
+	<secure-properties:config file="config/mule/secure/${mule.env}.salesforce-modus-productimages-system.yaml" key="${mule.key}" name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="6971a5b7-1136-405d-a958-018f8faf44f1" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<error-handler name="modusProductImagesSystem_Catch_Exception_Strategy" doc:id="da2841d8-3b8d-4498-b922-8f8d3a820b0f" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="95850183-a4c2-4028-b6fb-01f88df94b88" type="ANY" >
+			<aw-json-logger:logger doc:name="Product Images System Failure" doc:id="eafaa768-749b-4a43-871b-ea91bc47dee1" category="${processName}" rootCorrelationId='#[vars.rootCorrelationId default ""]' tracePoint="EXCEPTION" applicationName="${processName}" logMessage="#['Exception in Modus Product Images System ' ++ error.description]" >
+				<aw-json-logger:content ><![CDATA[#[{}]]]></aw-json-logger:content>
+			</aw-json-logger:logger>
+			<ee:transform doc:name="Set Error Response and Status" doc:id="67b0fcaf-019b-4299-8a4b-675ca06ade93" >
+				<ee:message />
+				<ee:variables >
+					<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.statusCode default 500]]></ee:set-variable>
+					<ee:set-variable variableName="errorResponse" ><![CDATA[%dw 2.0
+import * from dw::util::Timer
+output application/java
+---
+{
+	"errorPayload": '<error>' ++ error.description ++ '</error>',
+	"endTime": now(),
+	"endTimeInMillis": currentMilliseconds()
+}]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="request-response-loggingSub_Flow - Exception" doc:id="90ffae4a-20c3-41ee-bddf-770f66f3bea6" name="request-response-loggingSub_Flow" />
+			<ee:transform doc:name="Set Error Payload" doc:id="37a90812-8942-4c25-876b-1852e6540517" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-propagate>
+	</error-handler>
+	
+	
+</mule>

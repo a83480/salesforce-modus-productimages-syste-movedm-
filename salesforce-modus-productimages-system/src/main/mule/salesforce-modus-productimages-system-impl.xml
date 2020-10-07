@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:oauth="http://www.mulesoft.org/schema/mule/oauth" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/oauth http://www.mulesoft.org/schema/mule/oauth/current/mule-oauth.xsd">
+
+	<sub-flow name="sales-product-images-system-implSub_Flow" doc:id="f8c2fc46-c06e-4339-b215-91a7e23a8de2" >
+		<logger level="INFO" doc:name="Logger" doc:id="49260c61-4536-4c48-be00-928c5b1d4d16" message="Initial Logger"/>
+ 		<ee:transform doc:name="OAuth-Transform Message" doc:id="56038677-1acd-4c1b-9e8d-0417e997ec83">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/x-www-form-urlencoded
+---
+{
+	'client_secret': p("secure::oAuth.client_secret"),
+	'password': p('secure::oAuth.password'),//'Rkuldeep2*', 
+	'grant_type': p('secure::oAuth.grant_type'),//'password',
+	'username': p('secure::oAuth.username'),//'rajani.cheruku@andersencorp.com',
+	'client_id': p('secure::oAuth.client_id')//'74qZ5KZz4kbsyRw8'
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="oAuth-Request" doc:id="4ddd6249-4ca6-4d49-93ac-b902e21c44d5" config-ref="HTTP_Request_configuration_OAuth"  path="${oAuth.path}">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/x-www-form-urlencoded"
+}]]]></http:headers>
+		</http:request>
+ 		<ee:transform doc:name="GetParams-Transform Message" doc:id="3ffa83ab-8a02-45a2-bf4f-6bc0bca24a64" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="accessToken" ><![CDATA[%dw 2.0
+output application/java
+---
+("Bearer " ++ ((payload.access_token as String) default "")) as String]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="getProductImages-Request" doc:id="c7ab4640-f8a7-4b6f-b297-96560f6e89ba" config-ref="HTTP_Request_configuration-getProductImages" path="${GET.path}/{folderId}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	folderId : p('GET.params.folderIdUri')
+}]]]></http:uri-params>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	Authorization : vars.accessToken,
+	depth : p('GET.params.depthQuery')
+}]]]></http:query-params>
+		</http:request>
+	</sub-flow>
+</mule>

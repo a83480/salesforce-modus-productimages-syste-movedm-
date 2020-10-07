@@ -1,0 +1,19 @@
+#%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/4c16b0d0-fed3-4706-bca5-d67002c1cafe/ # 
+title: Sales - Product Images System
+description: REST Wrapper for Modus Product Images
+
+traits:
+  clientId: !include exchange_modules/09d89140-dc6e-4bac-ad5d-f55fc59af462/securityscheme_clientid_enforcement/1.0.1/clientid_enforcement_securityHeaders.raml
+  exceptionResp: !include exchange_modules/09d89140-dc6e-4bac-ad5d-f55fc59af462/exceptionresponses/1.0.0/exceptionresponses.raml
+
+/productImages:
+    is: [clientId, exceptionResp]
+    get: 
+      description: Retrive Product Images
+      responses:
+        200:
+          body:
+            application/json:
+              example: !include examples/productImages.json
+                
