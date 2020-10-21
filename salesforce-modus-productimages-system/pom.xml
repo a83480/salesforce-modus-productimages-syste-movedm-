@@ -57,6 +57,13 @@
                         <formats>
                             <format>html</format>
                         </formats>
+                        <ignoreFiles>
+                        	<ignoreFile>error-implementation.xml</ignoreFile>
+						    <ignoreFile>error-handling.xml</ignoreFile>
+						    <ignoreFile>salesforce-modus-productimages-system-global-config.xml</ignoreFile>
+						    <ignoreFile>salesforce-modus-productimages-system-impl.xml</ignoreFile>
+						    <ignoreFile>salesforce-modus-productimages-system.xml</ignoreFile>
+                        </ignoreFiles>
                     </coverage>
                 </configuration>
             </plugin>

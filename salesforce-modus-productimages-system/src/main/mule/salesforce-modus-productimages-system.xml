@@ -52,7 +52,7 @@ map ((main, indexOfmain) -> {
 			 		subSeries: subSer.children map ((subChild, indexOfSubChild) ->
 			 			{
 			 				subSeries: subChild.names.value[0],
-			 				subSeriesUrl: subChild.url
+			 				subSeriesUrl: subChild.url replace "http" with("https")
 			 			}
 			 		)
 			 	}
